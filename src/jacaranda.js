@@ -21,16 +21,15 @@
             htmlStr += JcrdGlobal.renderToHtml(dataObj);
             htmlStr += '</div></div>';
             this.target.after(htmlStr);
-            var _target = this.target;
             this.jcrdTree = this.target.next();
             var _jcrdTree = this.jcrdTree;
             var _this = this;
 
             this.target.on("click", function () {
                 if (_jcrdTree.is(":hidden")) {
-                    _this.show($.proxy(_target, this));
+                    _this.show();
                 } else {
-                    _this.hide($.proxy(_target, this));
+                    _this.hide();
                 }
             });
             _jcrdTree.on("click", ".fa-plus-square-o", function () {
@@ -43,30 +42,41 @@
                 $(this).addClass("fa-plus-square-o");
                 $(this).parent().next(".jcrd-tree-package-content").hide();
             });
+            var chooseFn = this.options.choose;
+            if(chooseFn != ''){
+                _jcrdTree.on("click", ".jcrd-tree-package-name", function(){
+                    var parent = $(this).parent(".jcrd-tree-package-header");
+                    var isChoose = false;
+                    if(parent.hasClass("jcrd-tree-selected")){
+                        parent.removeClass("jcrd-tree-selected");
+                    }else{
+                        isChoose = true;
+                        parent.addClass("jcrd-tree-selected");
+                    }
+                    chooseFn(this, isChoose);
+                });
+            }
         },
         show: function () {
-            var that = this;
-            $(document).on('mousedown', function(event){
-                that.hide(event);
-            });
+            $(document).on('mousedown', $.proxy(this.hide, this));
             this.jcrdTree.fadeIn(500);
         },
         hide: function (event) {
-            console.info(this);
             if(!event || $(event.target).parents(".jcrd-tree-div").length == 0){
                 $(document).off('mousedown', this.hide);
                 this.jcrdTree.fadeOut(500);
             }
         }
     };
-    //Jacaranda.prototype.init.prototype = Jacaranda.prototype;
+
     $.fn.jacaranda = function (options) {
         return this.each(function () {
             new Jacaranda(this, $.extend({}, $.fn.jacaranda.defaults, options));
         });
     };
     $.fn.jacaranda.defaults = {
-        "data": '{"_children":[{"_children":[{"_value":"佳能6D","id":"4"},{"_value":"佳能7D2","id":"5"},{"_value":"佳能70D","id":"6"}],"_value":"单反相机","id":"2"},{"_children":[{"_value":"索尼黑卡","id":"7"}],"_value":"数码相机","id":"3"}],"_value":"相机类","id":"1"}'
+        data: '',
+        choose: ''
     };
     var JcrdGlobal = {
         renderToHtml: function (dataObj) {
