@@ -5,91 +5,111 @@
     var Jacaranda = function (element, options) {
         this.target = $(element);
         this.options = options;
-        this.jcrdTree;
         this.init();
     };
     Jacaranda.prototype = {
         constructor: Jacaranda,
         init: function () {
-            var htmlStr;
             var data = this.options.data;
-            if (!data) {
-                return;
-            }
             var dataObj = $.evalJSON(data);
-            htmlStr = '<div id="_jcrdTree" class="jcrd-tree-div" style="display:none"><div class="jcrd-tree jcrd-tree-unselectable">';
-            htmlStr += JcrdGlobal.renderToHtml(dataObj);
-            htmlStr += '</div></div>';
-            this.target.after(htmlStr);
-            this.jcrdTree = this.target.next();
-            var _jcrdTree = this.jcrdTree;
-            var _this = this;
-
-            this.target.on("click", function () {
-                if (_jcrdTree.is(":hidden")) {
-                    _this.show();
-                } else {
-                    _this.hide();
-                }
+            var htmlStr = '<div class="jcrd-tree jcrd-tree-unselectable">';
+            $(dataObj).each(function(){
+                htmlStr += JcrdGlobal.renderToHtml(this);
             });
-            _jcrdTree.on("click", ".fa-plus-square-o", function () {
+            htmlStr += '</div>';
+            this.target.append(htmlStr);
+
+            $(this.target).on("click", ".fa-plus-square-o", function (event) {
                 $(this).removeClass("fa-plus-square-o");
                 $(this).addClass("fa-minus-square-o");
-                $(this).parent().next(".jcrd-tree-package-content").show();
+                $(this).parent().next(".jcrd-tree-package-content").removeClass("jcrd-content-hide");
+                event.stopPropagation();
             });
-            _jcrdTree.on("click", ".fa-minus-square-o", function () {
+            $(this.target).on("click", ".fa-minus-square-o", function (event) {
                 $(this).removeClass("fa-minus-square-o");
                 $(this).addClass("fa-plus-square-o");
-                $(this).parent().next(".jcrd-tree-package-content").hide();
+                $(this).parent().next(".jcrd-tree-package-content").addClass("jcrd-content-hide");
+                event.stopPropagation();
             });
-            var chooseFn = this.options.choose;
-            if(chooseFn != ''){
-                _jcrdTree.on("click", ".jcrd-tree-package-name", function(){
-                    var parent = $(this).parent(".jcrd-tree-package-header");
-                    var isChoose = false;
-                    if(parent.hasClass("jcrd-tree-selected")){
-                        parent.removeClass("jcrd-tree-selected");
-                    }else{
-                        isChoose = true;
-                        parent.addClass("jcrd-tree-selected");
-                    }
-                    chooseFn(this, isChoose);
-                });
-            }
+
+            $(this.target).on("click", ".jcrd-tree-package-header", function (event) {
+                var isChoose = false;
+                if ($(this).hasClass("jcrd-tree-selected")) {
+                    $(this).removeClass("jcrd-tree-selected");
+                } else {
+                    isChoose = true;
+                    $(this).addClass("jcrd-tree-selected");
+                }
+                var chooseFn = $(event.delegateTarget).data("_jcrdTree").options.choose;
+                if (chooseFn) chooseFn(this, isChoose);
+            });
         },
-        show: function () {
-            $(document).on('mousedown', $.proxy(this.hide, this));
-            this.jcrdTree.fadeIn(500);
+        select: function(selectIds, expand){
+            var tree = this;
+            $(selectIds).each(function(){
+                var treeNode = $(tree.target).find("#_jcrd_"+this);
+                if(!expand && treeNode) {
+                    $(treeNode).parents(".jcrd-tree-package").each(function () {
+                        var view = $(this).find(".fa-plus-square-o")[0];
+                        if(view){
+                            $(view).removeClass("fa-plus-square-o");
+                            $(view).addClass("fa-minus-square-o");
+                            $(view).parent().next(".jcrd-tree-package-content").removeClass("jcrd-content-hide");
+                        }
+                    });
+                }
+                $(treeNode).trigger("click");
+            });
         },
-        hide: function (event) {
-            if(!event || $(event.target).parents(".jcrd-tree-div").length == 0){
-                $(document).off('mousedown', this.hide);
-                this.jcrdTree.fadeOut(500);
-            }
+        expandAll: function(){
+            $(this.target).find(".jcrd-content-hide").each(function(){
+                $(this).removeClass("jcrd-content-hide");
+            });
+            $(this.target).find(".fa-plus-square-o").each(function(){
+                $(this).removeClass("fa-plus-square-o");
+                $(this).addClass("fa-minus-square-o");
+            });
+        },
+        closeAll: function(){
+            $(this.target).find(".jcrd-tree-package-content").each(function(){
+                $(this).addClass("jcrd-content-hide");
+            });
+            $(this.target).find(".fa-minus-square-o").each(function(){
+                $(this).addClass("fa-plus-square-o");
+                $(this).removeClass("fa-minus-square-o");
+            });
+        },
+        destory: function(){
+            this.target.removeData("_jcrdTree");
+            this.target.off('click');
+            $(this.target).find(".jcrd-tree").remove();
         }
     };
 
     $.fn.jacaranda = function (options) {
-        return this.each(function () {
-            new Jacaranda(this, $.extend({}, $.fn.jacaranda.defaults, options));
-        });
+        var jcrdTree = this.data("_jcrdTree");
+        if(!jcrdTree){
+            jcrdTree = new Jacaranda(this, $.extend({}, $.fn.jacaranda.defaults, options));
+            this.data("_jcrdTree", jcrdTree);
+        }
+        return jcrdTree;
     };
     $.fn.jacaranda.defaults = {
-        data: '',
-        choose: ''
+        data: {},
+        choose: null
     };
     var JcrdGlobal = {
         renderToHtml: function (dataObj) {
             var htmlStr = "";
             htmlStr += '<div class="jcrd-tree-package"><div class="jcrd-tree-package-header">';
-            if (!dataObj["_children"]) {
+            if (!dataObj["_children"] && dataObj !== Array) {
                 htmlStr += '<i class="fa"></i>';
             } else {
                 htmlStr += '<i class="fa fa-plus-square-o fa-1x"></i>';
             }
             htmlStr += '<div ' + JcrdGlobal.addAttrs(dataObj) + ' class="jcrd-tree-package-name">' + dataObj["_value"] + '</div></div>';
             if (dataObj["_children"]) {
-                htmlStr += '<div class="jcrd-tree-package-content" style="display:none">';
+                htmlStr += '<div class="jcrd-tree-package-content jcrd-content-hide">';
                 for (var childKey in dataObj["_children"]) {
                     htmlStr += JcrdGlobal.renderToHtml(dataObj["_children"][childKey]);
                 }
@@ -101,7 +121,9 @@
         addAttrs: function (dataObj) {
             var htmlStr = "";
             for (var key in dataObj) {
-                if (!key || "_value" == key || "_children" == key) {
+                if (!key || "_value" == key || "_children" == key) continue;
+                if("id" == key){
+                    htmlStr += JcrdGlobal.addAttr("id", "_jcrd_"+dataObj[key]);
                     continue;
                 }
                 htmlStr += JcrdGlobal.addAttr(key, dataObj[key]);

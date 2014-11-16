@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head lang="zh-CN">
+    <meta charset="UTF-8">
+    <title>jacaranda demo</title>
+    <!--ref plugins-->
+    <link rel="stylesheet" href="./bootstrap-3.3.0-dist/css/bootstrap.css">
+    <link rel="stylesheet" href="./font-awesome-4.2.0/css/font-awesome.css">
+    <script type="text/javascript" src="./jquery/jquery-1.11.1.min.js"></script>
+    <script type="text/javascript" src="./jquery/jquery.json.js"></script>
+    <script type="text/javascript" src="./bootstrap-3.3.0-dist/js/bootstrap.js"></script>
+    <!--jacaranda-->
+    <link rel="stylesheet" href="../src/jacaranda.css">
+    <script type="text/javascript" src="../src/jacaranda.js"></script>
+</head>
+<style>
+    .line{
+        display: block;
+        height: 3px;
+        background: #5CADE2;
+        width: 90%;
+    }
+</style>
+<body>
+    <div class="container">
+        <div class="col-md-offset-4 col-md-4" style="height: 330px">
+            <div id="test"></div>
+        </div>
+        <div class="col-md-12"><hr></div>
+        <div class="col-md-3 col-md-offset-2">
+            <ul class="nav nav-pills nav-stacked" >
+                <li id="create" class="active"><a href="#">创建树</a></li>
+                <li id="select"><a href="#">选中蓝楹 紫草科节点</a></li>
+                <li id="destory"><a href="#">销毁树</a></li>
+                <li id="expandAll"><a href="#">全部展开</a></li>
+                <li id="closeAll"><a href="#">全部收起</a></li>
+            </ul>
+        </div>
+        <div class="col-md-3">
+            <div id="code_create">
+                jcrdTree = $("#selecter").jacaranda(options);
+            </div>
+            <div id="code_select" style="display:none">
+                jcrdTree.select([id1, id2]);
+            </div>
+            <div id="code_destory" style="display:none">
+                jcrdTree.destory();
+            </div>
+            <div id="code_expandAll" style="display:none">
+                jcrdTree.expandAll();
+            </div>
+            <div id="code_closeAll" style="display:none">
+                jcrdTree.closeAll();
+            </div>
+        </div>
+        <div class="col-md-12"><hr></div>
+        <div class="col-md-12" style="word-break: break-all">
+            <h1>属性：</h1>
+            <span class="line"></span>
+            <h3>data:</h3>json串，约定如下：每一个节点展示的值取自_value，_id属性则会生成_jcrd_id，_children为数组存储所有子节点，其他的所有属性会直接按照key:value拼在节点dom内部
+        </div>
+    </div>
+</body>
+<script>
+    var data = '[{"_children":[{"_children":[{"_value":"蓝楹","id":"5"},{"_value":"火烧花","id":"6"},{"_value":"木蝴蝶","id":"7"}],"_value":"紫葳科","id":"3"},{"_children":[{"_value":"紫草","id":"8"},{"_value":"勿忘我","id":"9"}],"_value":"紫草科","id":"4"}],"_value":"管花目","id":"1"},{"_children":[{"_value":"石蒜科","id":"10"}],"_value":"天门冬目","id":"2"}]';
+    var jcrdTree;
+    $(document).ready(function () {
+        jcrdTree = $("#test").jacaranda({data: data});
+        $("#create").on("click", function(){
+            jcrdTree = $("#test").jacaranda({data: data});
+        });
+        $("#select").on("click", function(){
+            if(jcrdTree)jcrdTree.select([4, 5]);
+        });
+        $("#destory").on("click", function(){
+            if(jcrdTree)jcrdTree.destory();
+        });
+
+        $("#expandAll").on("click", function(){
+            if(jcrdTree)jcrdTree.expandAll();
+        });
+        $("#closeAll").on("click", function(){
+            if(jcrdTree)jcrdTree.closeAll();
+        });
+
+        $(".nav").on("click", "li", function(){
+            $(".active").removeClass("active");
+            $(this).addClass("active");
+            $("[id^=code_]").hide();
+            $("#code_"+$(this).attr("id")).show();
+        });
+    });
+
+</script>
+</html>
