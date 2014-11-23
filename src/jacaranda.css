@@ -21,6 +21,16 @@
     top: -20px;
     z-index: 1;
 }
+.jcrd-tree .jcrd-tree-package-content:last-child:after {
+    border-left: 1px solid #fff;
+    bottom: 0;
+    content: "";
+    display: inline-block;
+    left: -15px;
+    position: absolute;
+    top: 15px;
+    z-index: 1;
+}
 .jcrd-tree .jcrd-tree-package {
     cursor: pointer;
     min-height: 20px;
@@ -41,7 +51,6 @@
 .jcrd-tree .jcrd-tree-package .jcrd-tree-package-header .jcrd-tree-package-name {
     margin-left: 2px;
 }
-
 .jcrd-tree .jcrd-tree-package:last-child:after {
     border-left: 1px solid #fff;
     bottom: 0;

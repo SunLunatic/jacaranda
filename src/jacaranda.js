@@ -5,20 +5,23 @@
     var Jacaranda = function (element, options) {
         this.target = $(element);
         this.options = options;
+        this.options["params"]["leaf"] = this.options["params"]["leaf"] || "_isLeaf";
+        this.options["params"]["children"] = this.options["params"]["children"] || "_children";
+        this.options["params"]["showVal"] = this.options["params"]["showVal"] || "_value";
         this.init();
     };
     Jacaranda.prototype = {
         constructor: Jacaranda,
         init: function () {
-            var data = this.options.data;
+            var that = this;
+            var data = this.options["data"];
             var dataObj = $.evalJSON(data);
             var htmlStr = '<div class="jcrd-tree jcrd-tree-unselectable">';
             $(dataObj).each(function(){
-                htmlStr += JcrdGlobal.renderToHtml(this);
+                htmlStr += JcrdGlobal.renderToHtml(this, that.options["params"]);
             });
             htmlStr += '</div>';
             this.target.append(htmlStr);
-
             $(this.target).on("click", ".fa-plus-square-o", function (event) {
                 $(this).removeClass("fa-plus-square-o");
                 $(this).addClass("fa-minus-square-o");
@@ -31,7 +34,6 @@
                 $(this).parent().next(".jcrd-tree-package-content").addClass("jcrd-content-hide");
                 event.stopPropagation();
             });
-
             $(this.target).on("click", ".jcrd-tree-package-header", function (event) {
                 var isChoose = false;
                 if ($(this).hasClass("jcrd-tree-selected")) {
@@ -40,8 +42,8 @@
                     isChoose = true;
                     $(this).addClass("jcrd-tree-selected");
                 }
-                var chooseFn = $(event.delegateTarget).data("_jcrdTree").options.choose;
-                if (chooseFn) chooseFn(this, isChoose);
+                var clickCb = $(event.delegateTarget).data("_jcrdTree").options.clickCb;
+                if (clickCb) clickCb(event, $(this).children("div")[0], isChoose);
             });
         },
         select: function(selectIds, expand){
@@ -85,7 +87,6 @@
             $(this.target).find(".jcrd-tree").remove();
         }
     };
-
     $.fn.jacaranda = function (options) {
         var jcrdTree = this.data("_jcrdTree");
         if(!jcrdTree){
@@ -96,32 +97,34 @@
     };
     $.fn.jacaranda.defaults = {
         data: {},
-        choose: null
+        clickCb: null,
+        params: {},
+        synac: {}
     };
     var JcrdGlobal = {
-        renderToHtml: function (dataObj) {
+        renderToHtml: function (dataObj, params) {
             var htmlStr = "";
             htmlStr += '<div class="jcrd-tree-package"><div class="jcrd-tree-package-header">';
-            if (!dataObj["_children"] && dataObj !== Array) {
+            if (dataObj[params["leaf"]] == "false" || (!dataObj["_children"] && dataObj !== Array)) {
                 htmlStr += '<i class="fa"></i>';
             } else {
                 htmlStr += '<i class="fa fa-plus-square-o fa-1x"></i>';
             }
-            htmlStr += '<div ' + JcrdGlobal.addAttrs(dataObj) + ' class="jcrd-tree-package-name">' + dataObj["_value"] + '</div></div>';
-            if (dataObj["_children"]) {
+            htmlStr += '<div ' + JcrdGlobal.addAttrs(dataObj, params) + ' class="jcrd-tree-package-name">' + dataObj[params["showVal"]] + '</div></div>';
+            if (dataObj[params["leaf"]] != "false" && dataObj[params["children"]]) {
                 htmlStr += '<div class="jcrd-tree-package-content jcrd-content-hide">';
-                for (var childKey in dataObj["_children"]) {
-                    htmlStr += JcrdGlobal.renderToHtml(dataObj["_children"][childKey]);
+                for (var childKey in dataObj[params["children"]]) {
+                    htmlStr += JcrdGlobal.renderToHtml(dataObj[params["children"]][childKey], params);
                 }
                 htmlStr += "</div>";
             }
             htmlStr += "</div>";
             return htmlStr;
         },
-        addAttrs: function (dataObj) {
+        addAttrs: function (dataObj, params) {
             var htmlStr = "";
             for (var key in dataObj) {
-                if (!key || "_value" == key || "_children" == key) continue;
+                if (!key || params["showVal"] == key || params["children"] == key) continue;
                 if("id" == key){
                     htmlStr += JcrdGlobal.addAttr("id", "_jcrd_"+dataObj[key]);
                     continue;
